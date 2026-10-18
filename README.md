@@ -39,3 +39,12 @@ the candidate's, the main executable's, ran Rust's start-up, which gives
 each spawned thread an alternate signal stack for stack-overflow reports.
 Under `strace -f -c`, exactly half the threads created (5,640 of 11,306)
 called `mmap`, `munmap` and three `sigaltstack`: the candidate's threads.
+
+## License
+
+You may use this repository under the terms of any of these four Free and Open Source Software licences:
+
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+* Transitive Grace Period Public License 1.0 ([LICENSE-TGPPL](LICENSE-TGPPL) or https://spdx.org/licenses/TGPPL-1.0.html)
+* Bootstrap Open Source License v1.0 ([LICENSE-BOSL.txt](LICENSE-BOSL.txt))
