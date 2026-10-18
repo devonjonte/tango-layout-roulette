@@ -40,6 +40,13 @@ each spawned thread an alternate signal stack for stack-overflow reports.
 Under `strace -f -c`, exactly half the threads created (5,640 of 11,306)
 called `mmap`, `munmap` and three `sigaltstack`: the candidate's threads.
 
+## Fixed in Tango 0.8 and later
+
+Tango 0.8 runs each side in its own process. With 0.9 (this repository's
+pin since October 18), `benchthreads` against an exact copy of itself reads
+-3.8% to +5.3% over six runs, both signs, none marked significant, where
+0.6 read about +5% on the candidate's side in every run.
+
 ## License
 
 You may use this repository under the terms of any of these four Free and Open Source Software licences:

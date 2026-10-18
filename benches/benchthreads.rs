@@ -3,7 +3,7 @@
 use std::hint::black_box;
 use std::sync::Arc;
 use std::thread;
-use tango_bench::{Bencher, ErasedSampler, IntoBenchmarks, MeasurementSettings, benchmark_fn, tango_benchmarks, tango_main};
+use tango_bench::{Bencher, ErasedSampler, IntoBenchmarks, benchmark_fn, tango_benchmarks};
 
 #[inline(never)]
 pub fn dummy_func(maxi: u8, maxj: u8) -> u8 {
@@ -22,12 +22,12 @@ fn work(iters: u64) {
     }
 }
 
-fn on_caller(iters: u64) -> impl FnMut(Bencher) -> Box<dyn ErasedSampler> {
-    move |b: Bencher| b.iter(move || work(iters))
+fn on_caller(iters: u64) -> impl FnMut(Bencher<tango_bench::metrics::WallClock>) -> Box<dyn ErasedSampler> {
+    move |b: Bencher<tango_bench::metrics::WallClock>| b.iter(move || work(iters))
 }
 
-fn on_spawned(threads: u64, iters: u64) -> impl FnMut(Bencher) -> Box<dyn ErasedSampler> {
-    move |b: Bencher| {
+fn on_spawned(threads: u64, iters: u64) -> impl FnMut(Bencher<tango_bench::metrics::WallClock>) -> Box<dyn ErasedSampler> {
+    move |b: Bencher<tango_bench::metrics::WallClock>| {
         b.iter(move || {
             thread::scope(|scope| {
                 for _ in 0..threads {
@@ -43,4 +43,4 @@ fn benchmarks() -> impl IntoBenchmarks {
 }
 
 tango_benchmarks!(benchmarks());
-tango_main!(MeasurementSettings { ..Default::default() });
+
