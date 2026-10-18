@@ -20,13 +20,13 @@ set -eu
 K=${1:-4}
 BENCH=${BENCH:-bencha}
 RUNS=${2:-5}
-CPU=${CPU:-2}
+CPU=${CPU:-2,4}
 out=target/roulette
 mkdir -p "$out/lld"
 if [ "$(uname)" = Darwin ]; then
     pin() { "$@"; }
 else
-    pin() { taskset -c "$CPU" "$@"; }
+    pin() { taskset -c "$CPU" "$@"; }  # two CPUs: Tango 0.8+ runs each side in its own process
     lld=$(command -v ld.lld || ls /usr/bin/ld.lld-* | sort -V | tail -1)
     ln -sf "$lld" "$out/lld/ld.lld"
 fi

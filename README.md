@@ -21,7 +21,7 @@ slower than build 0 in every run, and −8.5% to −9.4% with the roles swapped;
 each build against its own copy stayed within a few percent of level.
 
 Needs Rust and python3; Linux needs lld (`apt install lld`); macOS uses its
-own linker (`-order_file`). Linux pins runs to CPU 2 (`CPU=N` to change).
+own linker (`-order_file`). Linux pins runs to CPUs 2 and 4 (`CPU=LIST` to change): Tango 0.8+ runs each side in its own process, and one shared CPU doubles the time.
 
 ## Threads: Tango's two sides are not alike
 
@@ -44,8 +44,8 @@ called `mmap`, `munmap` and three `sigaltstack`: the candidate's threads.
 
 Tango 0.8 runs each side in its own process. With 0.9 (this repository's
 pin since October 18), `benchthreads` against an exact copy of itself reads
--3.8% to +5.3% over six runs, both signs, none marked significant, where
-0.6 read about +5% on the candidate's side in every run.
+-0.5% to +0.5% over six runs (pinned to two CPUs), both signs, none marked
+significant, where 0.6 read about +5% on the candidate's side in every run.
 
 ## License
 
