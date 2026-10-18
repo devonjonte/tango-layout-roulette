@@ -22,3 +22,20 @@ each build against its own copy stayed within a few percent of level.
 
 Needs Rust and python3; Linux needs lld (`apt install lld`); macOS uses its
 own linker (`-order_file`). Linux pins runs to CPU 2 (`CPU=N` to change).
+
+## Threads: Tango's two sides are not alike
+
+    BENCH=benchthreads ./layout-roulette.sh 3 3
+
+`benchthreads` is @zooko's thread benchmark: the same work on the calling
+thread, or on one thread spawned and joined per call. With **an exact copy
+of the same binary on both sides**, the spawning variant reads about 5%
+slower on the candidate's side, marked significant, in every run (i7-12700K:
++3.6% to +6.1%, 9 of 9). The work on the caller reads level.
+
+The cause: Tango loads the baseline into the candidate's process as a
+library, so the process holds two copies of Rust's standard library. Only
+the candidate's, the main executable's, ran Rust's start-up, which gives
+each spawned thread an alternate signal stack for stack-overflow reports.
+Under `strace -f -c`, exactly half the threads created (5,640 of 11,306)
+called `mmap`, `munmap` and three `sigaltstack`: the candidate's threads.

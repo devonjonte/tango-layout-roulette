@@ -4,16 +4,21 @@
 #
 #   ./layout-roulette.sh [K] [RUNS]   (default 4 builds, 5 runs a pair)
 #
-# 1. Each build against an exact copy of itself (same binary, same layout).
+# BENCH=benchthreads measures @zooko's thread benchmark (work on the caller,
+# or on a thread spawned per call); the default, bencha, his minimal one.
+#
+# 1. Each build against an exact copy of itself, RUNS times (fresh processes).
 # 2. Pairs of builds of the same source with different layouts, each pair
 #    compared RUNS times.
-# If layout alone moves the measured function, (1) reads level and (2) reads a
-# steady, "significant" difference whose sign and size depend on the pair.
+# Layout alone moving the code: (1) level, (2) a steady difference whose sign
+# depends on the pair. State that changes per process (where a thread lands,
+# say): (1) itself drifts from run to run.
 #
 # Linux needs lld (ld.lld or ld.lld-NN); macOS uses its own ld (-order_file).
 # Linux pins the runs to CPU $CPU (default 2); macOS cannot pin.
 set -eu
 K=${1:-4}
+BENCH=${BENCH:-bencha}
 RUNS=${2:-5}
 CPU=${CPU:-2}
 out=target/roulette
@@ -34,28 +39,37 @@ link_flags() {
 }
 
 # The bench binary's own functions, to shuffle.
-cargo bench --bench=bencha --no-run -q 2>/dev/null
-base=$(ls target/release/deps/bencha-* | grep -v '\.d$' | head -1)
+cargo bench --bench=$BENCH --no-run -q 2>/dev/null
+base=$(ls target/release/deps/$BENCH-* | grep -v '\.d$' | head -1)
 nm "$base" | awk '$2 == "t" || $2 == "T" { print $3 }' | sort -u > "$out/symbols.txt"
 
 for i in $(seq 0 $((K - 1))); do
     python3 -c "import random,sys; s=open(sys.argv[1]).read().split(); random.Random($i).shuffle(s); print('\n'.join(s))" "$out/symbols.txt" > "$out/order-$i.txt"
     RUSTFLAGS="$(link_flags "$out/order-$i.txt")" \
-        cargo bench --bench=bencha --no-run -q --target-dir "$out/build-$i" 2>/dev/null
-    cp "$(ls "$out"/build-$i/release/deps/bencha-* | grep -v '\.d$' | head -1)" "$out/layout-$i"
+        cargo bench --bench=$BENCH --no-run -q --target-dir "$out/build-$i" 2>/dev/null
+    cp "$(ls "$out"/build-$i/release/deps/$BENCH-* | grep -v '\.d$' | head -1)" "$out/layout-$i"
     cp "$out/layout-$i" "$out/layout-$i-copy"
 done
 
-echo "== 1. each layout against an exact copy of itself"
+order() { nm -n "$1" | awk '$2 == "t" || $2 == "T" { print $3 }'; }
+order "$out/layout-0" > "$out/order-built-0.txt"
+for i in $(seq 1 $((K - 1))); do
+    order "$out/layout-$i" | cmp -s - "$out/order-built-0.txt" && same=no || same=yes
+    echo "layout $i: function order differs from layout 0: $same"
+done
+
+echo "== 1. each layout against an exact copy of itself, $RUNS runs"
 for i in $(seq 0 $((K - 1))); do
-    printf "layout %s vs its copy: " "$i"
-    pin "$out/layout-$i" compare "$out/layout-$i-copy" | tail -1 | sed 's/^[^[]*//'
+    echo "layout $i vs its copy:"
+    for r in $(seq "$RUNS"); do
+        pin "$out/layout-$i" compare "$out/layout-$i-copy" | sed 's/^/    /'
+    done
 done
 
 echo "== 2. the same source, different layouts, each pair $RUNS times"
 for i in $(seq 1 $((K - 1))); do
     printf "layout 0 vs layout %s:\n" "$i"
     for r in $(seq "$RUNS"); do
-        pin "$out/layout-$i" compare "$out/layout-0" | tail -1 | sed 's/^[^[]*/    /'
+        pin "$out/layout-$i" compare "$out/layout-0" | sed 's/^/    /'
     done
 done

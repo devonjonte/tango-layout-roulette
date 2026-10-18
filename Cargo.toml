@@ -22,3 +22,7 @@ nightly = []
 name = "simplebench"
 path = "src/bin/simplebench.rs"
 required-features = ["nightly"]
+
+[[bench]]
+name = "benchthreads"
+harness = false
