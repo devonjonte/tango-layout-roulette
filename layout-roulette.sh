@@ -62,7 +62,7 @@ echo "== 1. each layout against an exact copy of itself, $RUNS runs"
 for i in $(seq 0 $((K - 1))); do
     echo "layout $i vs its copy:"
     for r in $(seq "$RUNS"); do
-        pin "$out/layout-$i" compare "$out/layout-$i-copy" | sed 's/^/    /'
+        pin "$out/layout-$i" compare "$out/layout-$i-copy" | tr -d "\033" | sed -e 's/\[2K//g' -e '/^$/d' -e 's/^/    /'
     done
 done
 
@@ -70,6 +70,6 @@ echo "== 2. the same source, different layouts, each pair $RUNS times"
 for i in $(seq 1 $((K - 1))); do
     printf "layout 0 vs layout %s:\n" "$i"
     for r in $(seq "$RUNS"); do
-        pin "$out/layout-$i" compare "$out/layout-0" | sed 's/^/    /'
+        pin "$out/layout-$i" compare "$out/layout-0" | tr -d "\033" | sed -e 's/\[2K//g' -e '/^$/d' -e 's/^/    /'
     done
 done
