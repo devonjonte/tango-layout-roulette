@@ -13,3 +13,12 @@ harness = false
 
 [dependencies]
 thousands = "0.2.0"
+
+# simplebench needs nightly (#![feature(test)]): `cargo +nightly bench --features nightly`.
+[features]
+nightly = []
+
+[[bin]]
+name = "simplebench"
+path = "src/bin/simplebench.rs"
+required-features = ["nightly"]
